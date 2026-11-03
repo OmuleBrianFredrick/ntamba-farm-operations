@@ -1,13 +1,17 @@
 # Pending Real Integrations
 
-Status: **Intentionally deferred until the full farm system is functionally complete and locally verified.**
+Status: **Production integration is now in progress. GitHub and the Supabase database foundation are complete; the unchecked items below remain pending.**
 
 This document is the permanent handover checklist. Development must keep integration boundaries ready, but must not block completion of the application modules on live-service setup.
 
 ## Production infrastructure
 
-- Create and secure the production Supabase project.
-- Apply all versioned database migrations and seed only approved production master data.
+- [x] Publish the source repository at `https://github.com/OmuleBrianFredrick/ntamba-farm-operations` and make it public as requested.
+- [x] Create the `ntamba-farm-operations` Supabase project under the `Ntamba Farm` organization.
+- [x] Apply all four versioned database migrations and the approved Ntamba Farm reference seed.
+- [x] Verify 32 public tables, row-level security on all 32 tables, 38 controlled QHSE form definitions and the seeded farm master records.
+- [x] Connect the local application through a Git-ignored `.env.local` file using only the client-safe project URL and publishable key.
+- [x] Configure local authentication URLs and disable unrestricted public sign-up.
 - Configure authentication, administrator invitations, password recovery and role assignments.
 - Configure production file storage for QHSE evidence, receipts, farm photographs and supporting documents.
 - Select a hosting provider and deploy production, staging and preview environments.
@@ -66,4 +70,4 @@ A domain will be required for the live system. The final name should be short, e
 
 ## Current development rule
 
-Continue building and verifying all farm modules locally. Whenever a feature needs a real provider, implement a clean adapter and safe development fallback, then add the provider setup to this checklist rather than prematurely connecting production services.
+Continue integration in controlled stages. Never commit credentials; verify each provider connection locally before hosting, domain activation and production cutover.

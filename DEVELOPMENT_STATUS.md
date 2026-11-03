@@ -1,6 +1,15 @@
 # Development status — 3 November 2026
 
-Production integrations remain deferred as requested. See PENDING_REAL_INTEGRATIONS.md.
+Production integration has started. The public GitHub repository and live Supabase database foundation are complete; authentication users, storage, hosting, domain activation and the remaining launch work are tracked in PENDING_REAL_INTEGRATIONS.md.
+
+## Integration foundation — 3 November 2026
+
+- Public GitHub repository: `https://github.com/OmuleBrianFredrick/ntamba-farm-operations`.
+- Supabase project `ntamba-farm-operations` created under the `Ntamba Farm` organization on the free plan.
+- Four versioned migrations and the approved reference seed executed successfully.
+- Live verification returned 32 public tables, row-level security enabled on all 32, one organization, one farm, three workers, four crop varieties and all 38 QHSE form definitions.
+- Local authentication URLs were allow-listed, unrestricted public sign-up was disabled, and the application was connected using a Git-ignored local environment file.
+- Post-connection verification passed: lint clean, 47 tests across seven files passed, and the production/PWA build succeeded.
 
 ## Current increment
 
