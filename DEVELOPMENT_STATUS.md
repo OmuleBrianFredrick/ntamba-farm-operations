@@ -1,6 +1,6 @@
 # Development status — 3 November 2026
 
-Production integration has started. The public GitHub repository and live Supabase database foundation are complete; authentication users, storage, hosting, domain activation and the remaining launch work are tracked in PENDING_REAL_INTEGRATIONS.md.
+Production integration has started. The public GitHub repository, live Supabase database foundation and platform authentication are complete; storage, data synchronization, hosting, domain activation and the remaining launch work are tracked in PENDING_REAL_INTEGRATIONS.md.
 
 ## Integration foundation — 3 November 2026
 
@@ -9,6 +9,11 @@ Production integration has started. The public GitHub repository and live Supaba
 - Four versioned migrations and the approved reference seed executed successfully.
 - Live verification returned 32 public tables, row-level security enabled on all 32, one organization, one farm, three workers, four crop varieties and all 38 QHSE form definitions.
 - Local authentication URLs were allow-listed, unrestricted public sign-up was disabled, and the application was connected using a Git-ignored local environment file.
+- The developer and CEO/farm-owner identities were assigned active `administrator` and `ceo` memberships for Ntamba Farm.
+- The frontend now loads real Supabase sessions, profiles and memberships; protects Administration by role; hides unauthorized administration navigation; and provides invitation password setup and password recovery.
+- The Administration user register now reads live farm memberships and sends invitations or updates access through the deployed `manage-farm-user` Edge Function. The service-role key remains server-side.
+- Migration `202611030001_auth_user_management.sql` added the authenticated profile email directory and email-sync trigger. The migration executed successfully against the live project.
+- The deployed Edge Function rejects unauthenticated requests with HTTP 401 and verifies management membership before performing privileged user operations.
 - Post-connection verification passed: lint clean, 47 tests across seven files passed, and the production/PWA build succeeded.
 
 ## Current increment
@@ -17,9 +22,9 @@ Production integration has started. The public GitHub repository and live Supaba
 
 The Reports workspace now consolidates crop, animal, lifecycle, stock, finance and QHSE records into one date- and enterprise-filtered management view. It includes production, finance, stock and compliance drill-downs, CSV export, printable views and immutable saved report snapshots.
 
-The Administration workspace now includes a local user/responsibility register, seven-role least-privilege permission policy, append-only audit evidence, farm operating settings and repeatable whole-system acceptance runs. Acceptance checks cover module readability, double-entry balance, non-negative stock, the 38-form catalogue, critical actions, unique user assignments, permission boundaries, controlled evidence and deferred integration readiness.
+The Administration workspace now includes a live Supabase user/responsibility register, secure invitations and access updates, a local least-privilege permission preview, append-only local acceptance evidence, farm operating settings and repeatable whole-system acceptance runs. Acceptance checks cover module readability, double-entry balance, non-negative stock, the 38-form catalogue, critical actions, unique user assignments, permission boundaries, controlled evidence and deferred integration readiness.
 
-This completes the locally functional application plan. Real authentication enforcement, server-side authorization, centralized audit retention, database synchronization, scheduled reporting, backups, hosting and domain activation remain intentionally deferred in PENDING_REAL_INTEGRATIONS.md.
+This completes the locally functional application plan. Authentication and farm-role administration are now connected to Supabase. Centralized audit retention, operational database synchronization, scheduled reporting, backups, hosting and domain activation remain in PENDING_REAL_INTEGRATIONS.md.
 
 **Phase 5: QHSE, controlled forms and management oversight is complete for the agreed local-development scope.**
 

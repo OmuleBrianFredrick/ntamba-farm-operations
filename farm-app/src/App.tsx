@@ -6,6 +6,8 @@ import { OverviewPage } from './pages/OverviewPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { lazy, Suspense } from 'react'
+import { RequireRole } from './auth/RequireRole'
+import { SetPasswordPage } from './pages/SetPasswordPage'
 
 const CropsPage = lazy(() => import('./pages/CropsPage').then((module) => ({ default: module.CropsPage })))
 const NewPlantingPage = lazy(() => import('./pages/NewPlantingPage').then((module) => ({ default: module.NewPlantingPage })))
@@ -29,6 +31,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="login" element={<LoginPage />} />
+          <Route path="set-password" element={<SetPasswordPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
               <Route index element={<OverviewPage />} />
@@ -43,7 +46,9 @@ export default function App() {
               <Route path="finance" element={<Suspense fallback={<div className="route-loading">Loading sales and finance…</div>}><FinancePage /></Suspense>} />
               <Route path="qhse" element={<Suspense fallback={<div className="route-loading">Loading QHSE forms…</div>}><QhsePage /></Suspense>} />
               <Route path="reports" element={<Suspense fallback={<div className="route-loading">Loading cross-enterprise reports…</div>}><ReportsPage /></Suspense>} />
-              <Route path="administration" element={<Suspense fallback={<div className="route-loading">Loading administration…</div>}><AdministrationPage /></Suspense>} />
+              <Route element={<RequireRole allowed={['ceo', 'administrator', 'farm_manager']} />}>
+                <Route path="administration" element={<Suspense fallback={<div className="route-loading">Loading administration…</div>}><AdministrationPage /></Suspense>} />
+              </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>

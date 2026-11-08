@@ -1,6 +1,6 @@
 # Pending Real Integrations
 
-Status: **Production integration is now in progress. GitHub and the Supabase database foundation are complete; the unchecked items below remain pending.**
+Status: **Production integration is now in progress. GitHub, the Supabase database foundation and platform authentication are complete; the unchecked items below remain pending.**
 
 This document is the permanent handover checklist. Development must keep integration boundaries ready, but must not block completion of the application modules on live-service setup.
 
@@ -12,7 +12,7 @@ This document is the permanent handover checklist. Development must keep integra
 - [x] Verify 32 public tables, row-level security on all 32 tables, 38 controlled QHSE form definitions and the seeded farm master records.
 - [x] Connect the local application through a Git-ignored `.env.local` file using only the client-safe project URL and publishable key.
 - [x] Configure local authentication URLs and disable unrestricted public sign-up.
-- Configure authentication, administrator invitations, password recovery and role assignments.
+- [x] Configure Supabase authentication, protected frontend routes, administrator/CEO memberships, secure administrator invitations, password setup, password recovery and role-aware Administration access.
 - Configure production file storage for QHSE evidence, receipts, farm photographs and supporting documents.
 - Select a hosting provider and deploy production, staging and preview environments.
 - Register or connect a suitable domain name.
@@ -48,7 +48,8 @@ This document is the permanent handover checklist. Development must keep integra
 
 ## Reporting and administration production integration
 
-- Replace local responsibility assignments with authenticated production users, invitation delivery, account recovery and server-enforced role/enterprise permissions.
+- [x] Replace the Administration user register with authenticated Supabase users, invitation delivery, account recovery and server-enforced farm-role management.
+- Extend server-enforced enterprise assignments and module permissions as each operational IndexedDB store is synchronized to Supabase.
 - Persist audit events on the server with tamper-evident retention, authorized export, monitoring alerts and an approved archival policy.
 - Run cross-enterprise reports against synchronized server records and add approved scheduled delivery, background generation and protected file storage.
 - Confirm reporting calendars, cutoff rules, enterprise ownership and management sign-off responsibilities with the farm leadership team.
