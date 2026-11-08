@@ -5,7 +5,7 @@ import { queueDailyWork, saveDailyWorkDraft, type DailyWorkSyncPayload } from '.
 import { flushSyncQueue } from '../lib/syncEngine'
 import { acceptedOutput } from '../lib/farmMath'
 
-const workers = [
+const initialWorkers = [
   { id: '70000000-0000-4000-8000-000000000001', name: 'Amina K.', pay: 'Daily wage' },
   { id: '70000000-0000-4000-8000-000000000002', name: 'Peter M.', pay: 'Task rate' },
   { id: '70000000-0000-4000-8000-000000000003', name: 'John O.', pay: 'Monthly salary' },
@@ -21,13 +21,18 @@ const demoIds = {
 export function DailyWorkPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(2)
+  const [workers, setWorkers] = useState(initialWorkers)
+  const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent'>>(() => Object.fromEntries(initialWorkers.map((worker) => [worker.id, 'present'])))
+  const [workerQuery, setWorkerQuery] = useState('')
+  const [showAddWorker, setShowAddWorker] = useState(false)
+  const [photoName, setPhotoName] = useState('')
   const [harvested, setHarvested] = useState(1240)
   const [rejected, setRejected] = useState(35)
   const [saved, setSaved] = useState('Saved on this phone')
   const accepted = useMemo(() => acceptedOutput(harvested, rejected), [harvested, rejected])
 
   const save = async () => {
-    await saveDailyWorkDraft(step, { harvested, rejected, accepted, workers })
+    await saveDailyWorkDraft(step, { harvested, rejected, accepted, workers: workers.map((worker) => ({ ...worker, attendance: attendance[worker.id] })) })
     setSaved(`Saved on this phone at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)
   }
 
@@ -42,7 +47,7 @@ export function DailyWorkPage() {
         output_quantity: harvested, rejected_quantity: rejected, output_unit: 'kg',
         submitted_at: new Date().toISOString(),
       },
-      workers: workers.map((worker) => ({
+      workers: workers.filter((worker) => attendance[worker.id] === 'present').map((worker) => ({
         id: crypto.randomUUID(), activity_id: activityId, worker_id: worker.id, attendance_status: 'present' as const,
       })),
       inputs: [{
@@ -72,11 +77,12 @@ export function DailyWorkPage() {
       {step === 2 ? (
         <section className="form-panel">
           <h2>Who worked on this activity?</h2>
-          <input className="worker-search" placeholder="Search workers by name" aria-label="Search workers" />
+          <input className="worker-search" placeholder="Search workers by name" aria-label="Search workers" value={workerQuery} onChange={(event) => setWorkerQuery(event.target.value)} />
           <div className="worker-list">
-            {workers.map((worker) => <div className="worker-row" key={worker.name}><div className="worker-copy"><strong>{worker.name}</strong><span>{worker.pay}</span></div><button className="attendance">Present⌄</button></div>)}
+            {workers.filter((worker) => worker.name.toLowerCase().includes(workerQuery.toLowerCase())).map((worker) => <div className="worker-row" key={worker.id}><div className="worker-copy"><strong>{worker.name}</strong><span>{worker.pay}</span></div><button type="button" className="attendance" onClick={() => setAttendance((current) => ({ ...current, [worker.id]: current[worker.id] === 'present' ? 'absent' : 'present' }))}>{attendance[worker.id] === 'present' ? 'Present' : 'Absent'}⌄</button></div>)}
           </div>
-          <button className="secondary-button wide-secondary"><Plus size={17} /> Add worker</button>
+          <button type="button" className="secondary-button wide-secondary" onClick={() => setShowAddWorker((value) => !value)}><Plus size={17} /> {showAddWorker ? 'Close worker form' : 'Add worker'}</button>
+          {showAddWorker ? <form className="form-panel embedded-form" onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); const name = String(form.get('name') ?? '').trim(); const pay = String(form.get('pay') ?? '').trim(); if (!name || !pay) return; const worker = { id: crypto.randomUUID(), name, pay }; setWorkers((current) => [...current, worker]); setAttendance((current) => ({ ...current, [worker.id]: 'present' })); event.currentTarget.reset(); setShowAddWorker(false) }}><div className="form-grid"><label className="field-group"><span>Worker name</span><input className="field" name="name" required /></label><label className="field-group"><span>Pay basis</span><input className="field" name="pay" placeholder="Daily wage, task rate or salary" required /></label></div><div className="form-actions"><button className="primary-button">Add worker</button></div></form> : null}
         </section>
       ) : (
         <section className="form-panel">
@@ -87,7 +93,7 @@ export function DailyWorkPage() {
             <Field label="Rejected quantity (kg)" value={rejected} onChange={setRejected} required />
             <div className="field-group"><label>Inputs used</label><div className="input-row"><input className="field" defaultValue="Harvest crates" /><input className="field" defaultValue="80" /><input className="field" defaultValue="units" /></div></div>
             <div className="field-group full"><label>Work not completed or problems <span style={{ color: '#68756d', fontWeight: 400 }}>(optional)</span></label><textarea className="field" placeholder="Add details if needed" /></div>
-            <button className="secondary-button field-group full"><ImagePlus size={17} /> Add photo (optional)</button>
+            <label className="secondary-button field-group full" style={{ cursor: 'pointer' }}><ImagePlus size={17} /> {photoName || 'Add photo (optional)'}<input type="file" accept="image/*" capture="environment" hidden onChange={(event) => setPhotoName(event.target.files?.[0]?.name ?? '')} /></label>
           </div>
           <div className="calculated"><strong>Today&apos;s output: {accepted.toLocaleString()} kg accepted</strong><span>{harvested.toLocaleString()} kg harvested − {rejected.toLocaleString()} kg rejected</span></div>
           <div className="offline-note">Offline-ready — this record will sync automatically when a connection is available.</div>

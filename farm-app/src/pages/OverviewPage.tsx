@@ -44,7 +44,7 @@ export function OverviewPage() {
         </div>
 
         <section className="panel attention">
-          <PanelHead title="Needs attention" />
+          <PanelHead title="Needs attention" destination="/reports" />
           <ul className="attention-list">
             <Attention title="3 overdue wages" detail="Total UGX 640,000" danger />
             <Attention title="Dairy Block B water check missed" detail="Scheduled for today" />
@@ -56,7 +56,7 @@ export function OverviewPage() {
 
       <div className="bottom-grid">
         <section className="panel">
-          <PanelHead title="Cash today" />
+          <PanelHead title="Cash today" destination="/finance" />
           <div className="cash-rail">
             <Cash label="Received" value="UGX 4,860,000" />
             <Cash label="Paid" value="UGX 1,720,000" />
@@ -69,7 +69,7 @@ export function OverviewPage() {
           </table>
         </section>
         <section className="panel">
-          <PanelHead title="Required records" />
+          <PanelHead title="Required records" destination="/qhse?view=my-forms" />
           <ul className="record-list">
             <Attention title="Daily inspection" detail="Due today" danger />
             <li><CheckCircle2 color="#18864b" /><div className="list-copy"><strong>Poultry daily record</strong><span>Submitted today, 08:12</span></div></li>
@@ -86,8 +86,9 @@ function Summary({ Icon, value, label, trend }: { Icon: typeof Users; value: str
   return <div className="summary-item"><Icon /><div><span className="summary-value">{value}</span><span className="summary-label">{label}</span><span className="summary-trend">{trend}</span></div></div>
 }
 
-function PanelHead({ title, filters = false }: { title: string; filters?: boolean }) {
-  return <div className="panel-head"><h2>{title}</h2>{filters ? <div className="filters"><select aria-label="Enterprise"><option>All enterprises</option></select><select aria-label="Date"><option>Today, 1 Nov 2026</option></select></div> : <button className="text-link">View all →</button>}</div>
+function PanelHead({ title, filters = false, destination }: { title: string; filters?: boolean; destination?: string }) {
+  const navigate = useNavigate()
+  return <div className="panel-head"><h2>{title}</h2>{filters ? <div className="filters"><select aria-label="Enterprise"><option>All enterprises</option></select><select aria-label="Date"><option>Today, 1 Nov 2026</option></select></div> : <button className="text-link" onClick={() => navigate(destination ?? '/reports')} aria-label={`View all ${title.toLowerCase()}`}>View all →</button>}</div>
 }
 
 function Attention({ title, detail, danger = false }: { title: string; detail: string; danger?: boolean }) {
