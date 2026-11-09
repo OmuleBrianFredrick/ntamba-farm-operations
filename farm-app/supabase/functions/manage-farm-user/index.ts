@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -23,8 +24,11 @@ Deno.serve(async (request) => {
     const authorization = request.headers.get('Authorization')
     if (!authorization?.startsWith('Bearer ')) return response({ ok: false, error: 'Authentication is required.' }, 401)
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if (!supabaseUrl || !serviceKey) {
+      return response({ ok: false, error: 'The user-management function is missing its Supabase server configuration.' }, 500)
+    }
     const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
     const token = authorization.slice('Bearer '.length)
     const { data: userData, error: userError } = await admin.auth.getUser(token)
