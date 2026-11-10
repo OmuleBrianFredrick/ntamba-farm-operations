@@ -74,19 +74,39 @@ export async function listFarmUsers(membership: FarmMembership): Promise<FarmUse
 
 async function invokeUserManagement(body: Record<string, unknown>) {
   const client = requireSupabase()
-  const { data, error } = await client.functions.invoke('manage-farm-user', { body })
-  if (error) {
-    let message = error.message
-    const context = 'context' in error ? error.context : undefined
-    if (context && typeof context === 'object' && 'json' in context && typeof context.json === 'function') {
-      const responseContext = context as { clone?: () => { json: () => Promise<unknown> }; json: () => Promise<unknown> }
-      const payload = await (responseContext.clone ? responseContext.clone().json() : responseContext.json()).catch(() => null) as { error?: unknown } | null
-      if (typeof payload?.error === 'string') message = payload.error
-    }
-    throw new Error(message)
+  const { data: sessionData, error: sessionError } = await client.auth.getSession()
+  if (sessionError) throw new Error(`Unable to read the current Supabase session: ${sessionError.message}`)
+  const accessToken = sessionData.session?.access_token
+  if (!accessToken) throw new Error('Your Supabase session has expired. Sign in again before sending an invitation.')
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
+  const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
+  if (!supabaseUrl || !publishableKey) throw new Error('Supabase is not configured for user management.')
+
+  let response: Response
+  try {
+    response = await fetch(`${supabaseUrl}/functions/v1/manage-farm-user`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: publishableKey,
+        'Content-Type': 'application/json',
+        'X-Client-Info': 'ntamba-farm-operations',
+      },
+      body: JSON.stringify(body),
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown network error.'
+    throw new Error(`Unable to reach the Supabase user-management function: ${message}`)
   }
-  if (!data?.ok) throw new Error(data?.error ?? 'The user-management request failed.')
-  return data as { ok: true; invited?: boolean }
+
+  const payload = await response.json().catch(() => null) as { ok?: boolean; error?: unknown } | null
+  if (!response.ok) {
+    const detail = typeof payload?.error === 'string' ? payload.error : `HTTP ${response.status}`
+    throw new Error(`Supabase user-management failed: ${detail}`)
+  }
+  if (!payload?.ok) throw new Error(typeof payload?.error === 'string' ? payload.error : 'The user-management request failed.')
+  return payload as { ok: true; invited?: boolean }
 }
 
 export async function inviteFarmUser(membership: FarmMembership, input: FarmUserInput) {
