@@ -72,33 +72,55 @@ export async function listFarmUsers(membership: FarmMembership): Promise<FarmUse
   }).sort((left, right) => left.name.localeCompare(right.name))
 }
 
-async function invokeUserManagement(body: Record<string, unknown>) {
+async function getAccessToken() {
   const client = requireSupabase()
-  const { data: sessionData, error: sessionError } = await client.auth.getSession()
+  let { data: sessionData, error: sessionError } = await client.auth.getSession()
   if (sessionError) throw new Error(`Unable to read the current Supabase session: ${sessionError.message}`)
-  const accessToken = sessionData.session?.access_token
+  let session = sessionData.session
+  if (!session || (session.expires_at ?? 0) * 1000 < Date.now() + 60_000) {
+    const refreshed = await client.auth.refreshSession()
+    sessionError = refreshed.error
+    session = refreshed.data.session
+    if (sessionError) throw new Error(`Your Supabase session has expired. Sign in again before sending an invitation.`)
+  }
+  const accessToken = session?.access_token
   if (!accessToken) throw new Error('Your Supabase session has expired. Sign in again before sending an invitation.')
+  return accessToken
+}
+
+async function invokeUserManagement(body: Record<string, unknown>) {
+  let accessToken = await getAccessToken()
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
   const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
   if (!supabaseUrl || !publishableKey) throw new Error('Supabase is not configured for user management.')
 
-  let response: Response
-  try {
-    response = await fetch(`${supabaseUrl}/functions/v1/manage-farm-user`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        apikey: publishableKey,
-        'Content-Type': 'application/json',
-        'X-Client-Info': 'ntamba-farm-operations',
-      },
-      body: JSON.stringify(body),
-    })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown network error.'
-    throw new Error(`Unable to reach the Supabase user-management function: ${message}`)
+  let response: Response | undefined
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      response = await fetch(`${supabaseUrl}/functions/v1/manage-farm-user`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: publishableKey,
+          'Content-Type': 'application/json',
+          'X-Client-Info': 'ntamba-farm-operations',
+        },
+        body: JSON.stringify(body),
+      })
+      if (response.status !== 401 || attempt === 1) break
+      accessToken = await getAccessToken()
+    } catch (error) {
+      if (attempt === 0) {
+        accessToken = await getAccessToken()
+        continue
+      }
+      const message = error instanceof Error ? error.message : 'Unknown network error.'
+      throw new Error(`Unable to reach the Supabase user-management function: ${message}`)
+    }
   }
+  if (!response) throw new Error('Unable to reach the Supabase user-management function.')
 
   const payload = await response.json().catch(() => null) as { ok?: boolean; error?: unknown } | null
   if (!response.ok) {
