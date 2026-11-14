@@ -44,7 +44,7 @@ export function SupabaseUsersWorkspace({ membership, rows, refresh, setMessage }
   }
 
   return <section className="panel">
-    <div className="crop-toolbar"><div><h2>Platform users and responsibilities</h2><span>{rows.length} Supabase membership(s) · {membership.farmName}</span></div><button className="primary-button" onClick={() => { setEditing(null); setShow(!show) }}><UserPlus />{show ? 'Close form' : 'Invite user'}</button></div>
+    <div className="crop-toolbar"><div><h2>Platform users and responsibilities</h2><span>{rows.length} Supabase membership(s) · {membership.farmName}</span></div><button type="button" className="primary-button" onClick={() => { setEditing(null); setShow(!show) }}><UserPlus />{show ? 'Close form' : 'Invite user'}</button></div>
     {(show || editing) && <form className="form-panel embedded-form" onSubmit={submit}>
       <div className="form-grid three-column">
         <Field name="name" label="Full name" value={editing?.name} />
@@ -56,7 +56,7 @@ export function SupabaseUsersWorkspace({ membership, rows, refresh, setMessage }
       </div>
       <div className="form-actions"><span className="saved-note">{editing ? 'Email changes require a separate identity-verification flow.' : 'Supabase will email a secure account-setup invitation.'}</span><button className="primary-button" disabled={saving}>{saving ? 'Saving…' : editing ? 'Update platform user' : 'Send invitation'}</button></div>
     </form>}
-    <div className="table-scroll"><table className="crop-table"><thead><tr><th>User</th><th>Role</th><th>Farm</th><th>Status</th><th>Added</th><th>Action</th></tr></thead><tbody>{rows.map((user) => <tr key={user.membershipId}><td><strong>{user.name}</strong><span>{user.email}{user.phone ? ` · ${user.phone}` : ''}</span></td><td>{platformRoleLabels[user.role]}</td><td>{membership.farmName}</td><td><span className={`operation-status ${user.isActive ? 'active' : 'inactive'}`}>{user.isActive ? 'active' : 'suspended'}</span></td><td>{new Date(user.createdAt).toLocaleDateString('en-GB')}</td><td><button className="text-link" onClick={() => { setEditing(user); setShow(false) }}>Edit</button></td></tr>)}</tbody></table></div>
+    <div className="table-scroll"><table className="crop-table"><thead><tr><th>User</th><th>Role</th><th>Farm</th><th>Status</th><th>Added</th><th>Action</th></tr></thead><tbody>{rows.map((user) => <tr key={user.membershipId}><td><strong>{user.name}</strong><span>{user.email}{user.phone ? ` · ${user.phone}` : ''}</span></td><td>{platformRoleLabels[user.role]}</td><td>{membership.farmName}</td><td><span className={`operation-status ${user.isActive ? 'active' : 'inactive'}`}>{user.isActive ? 'active' : 'suspended'}</span></td><td>{new Date(user.createdAt).toLocaleDateString('en-GB')}</td><td><button type="button" className="text-link" onClick={() => { setEditing(user); setShow(false) }}>Edit</button></td></tr>)}</tbody></table></div>
   </section>
 }
 

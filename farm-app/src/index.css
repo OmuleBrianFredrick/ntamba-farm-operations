@@ -299,6 +299,15 @@ button { cursor: pointer; }
 .lifecycle-recent .panel-head span { color: var(--muted); font-size: 11px; }
 .lifecycle-grid { display: grid; gap: 14px; }
 .embedded-form { border-width: 0 0 1px; background: #fbfdfb; }
+.administration-page .embedded-form .field-group { min-width: 0; position: relative; }
+.administration-page .embedded-form select.field {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: pointer;
+  appearance: auto;
+  -webkit-appearance: auto;
+}
 .toolbar-actions { display: flex; align-items: center; gap: 9px; }
 .toolbar-actions .primary-button { white-space: nowrap; }
 .register-message { margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line); color: var(--forest-800); background: var(--forest-50); font-size: 12px; }
