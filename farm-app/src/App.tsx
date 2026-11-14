@@ -1,14 +1,13 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
-import { DailyWorkPage } from './pages/DailyWorkPage'
-import { OverviewPage } from './pages/OverviewPage'
-import { LoginPage } from './pages/LoginPage'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { lazy, Suspense } from 'react'
 import { RequireRole } from './auth/RequireRole'
-import { SetPasswordPage } from './pages/SetPasswordPage'
 
+const LoginPage = lazy(() => import('./pages/LoginPage').then((module) => ({ default: module.LoginPage })))
+const SetPasswordPage = lazy(() => import('./pages/SetPasswordPage').then((module) => ({ default: module.SetPasswordPage })))
+const OverviewPage = lazy(() => import('./pages/OverviewPage').then((module) => ({ default: module.OverviewPage })))
+const DailyWorkPage = lazy(() => import('./pages/DailyWorkPage').then((module) => ({ default: module.DailyWorkPage })))
 const CropsPage = lazy(() => import('./pages/CropsPage').then((module) => ({ default: module.CropsPage })))
 const NewPlantingPage = lazy(() => import('./pages/NewPlantingPage').then((module) => ({ default: module.NewPlantingPage })))
 const CropRecordPage = lazy(() => import('./pages/CropRecordPage').then((module) => ({ default: module.CropRecordPage })))
@@ -19,23 +18,16 @@ const QhsePage = lazy(() => import('./pages/QhsePage').then((module) => ({ defau
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })))
 const AdministrationPage = lazy(() => import('./pages/AdministrationPage').then((module) => ({ default: module.AdministrationPage })))
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 30_000, refetchOnWindowFocus: false },
-  },
-})
-
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="login" element={<LoginPage />} />
-          <Route path="set-password" element={<SetPasswordPage />} />
+    <BrowserRouter>
+      <Routes>
+          <Route path="login" element={<Suspense fallback={<div className="route-loading">Loading sign in.</div>}><LoginPage /></Suspense>} />
+          <Route path="set-password" element={<Suspense fallback={<div className="route-loading">Loading account setup.</div>}><SetPasswordPage /></Suspense>} />
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
-              <Route index element={<OverviewPage />} />
-              <Route path="daily-work" element={<DailyWorkPage />} />
+              <Route index element={<Suspense fallback={<div className="route-loading">Loading overview.</div>}><OverviewPage /></Suspense>} />
+              <Route path="daily-work" element={<Suspense fallback={<div className="route-loading">Loading daily work.</div>}><DailyWorkPage /></Suspense>} />
               <Route path="livestock" element={<Suspense fallback={<div className="route-loading">Loading livestock operations…</div>}><AnimalOperationsPage key="livestock" enterprise="livestock" /></Suspense>} />
               <Route path="poultry" element={<Suspense fallback={<div className="route-loading">Loading poultry operations…</div>}><AnimalOperationsPage key="poultry" enterprise="poultry" /></Suspense>} />
               <Route path="fish-apiary" element={<Suspense fallback={<div className="route-loading">Loading fish and apiary operations…</div>}><AnimalOperationsPage key="fish-apiary" enterprise="fish-apiary" /></Suspense>} />
@@ -52,8 +44,7 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Route>
-        </Routes>
-      </BrowserRouter>
-    </QueryClientProvider>
+      </Routes>
+    </BrowserRouter>
   )
 }
