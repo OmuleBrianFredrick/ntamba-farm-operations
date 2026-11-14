@@ -26,7 +26,7 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <aside className={`sidebar${open ? ' open' : ''}`}>
-        <div className="brand"><strong>Ntamba</strong><span>Farm Operations</span></div>
+        <div className="brand"><img src="/ntamba-logo.png" alt="Ntamba Processors" /><span>Farm Operations</span></div>
         <nav className="nav-list" aria-label="Primary navigation">
           {items.filter(([to]) => to !== '/administration' || canManageUsers).map(([to, label, Icon]) => (
             <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} onClick={() => setOpen(false)}>

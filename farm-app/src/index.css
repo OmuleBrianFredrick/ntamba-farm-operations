@@ -31,7 +31,7 @@ button { cursor: pointer; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 240px minmax(0, 1fr); }
 .sidebar { position: sticky; top: 0; height: 100vh; padding: 26px 14px 18px; color: #fff; background: var(--forest-950); display: flex; flex-direction: column; }
 .brand { padding: 0 10px 27px; }
-.brand strong { display: block; font-size: 25px; line-height: 1.05; letter-spacing: -.5px; }
+.brand img { display: block; width: 100%; max-width: 205px; height: 74px; object-fit: contain; object-position: left center; }
 .brand span { display: block; margin-top: 4px; color: #c3d7ce; font-size: 15px; }
 .nav-list { display: grid; gap: 3px; }
 .nav-item { display: flex; align-items: center; gap: 13px; min-height: 45px; padding: 0 12px; border-radius: 8px; color: #eef7f2; text-decoration: none; font-size: 14px; font-weight: 520; }
