@@ -3,7 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  // Keep this in sync with both supabase-js and the direct browser fallback.
+  // The gateway performs the preflight before the function sees the POST.
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-api-version',
+  'Access-Control-Max-Age': '600',
 }
 
 const allowedRoles = new Set([
