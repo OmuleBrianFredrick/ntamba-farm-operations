@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { localDatabaseName } from '../../lib/sharedDemoMode'
 import { canAccessForm, formById, qhseForms, type QhseFrequency, type QhseRole } from './qhseCatalog'
 
 export type SubmissionStatus = 'draft' | 'submitted' | 'needs-changes' | 'approved' | 'restricted'
@@ -27,7 +28,7 @@ class QhseDatabase extends Dexie {
   reportPacks!: EntityTable<ReportPack, 'id'>
   assignments!: EntityTable<FormAssignment, 'id'>
   constructor() {
-    super('ntamba-qhse')
+    super(localDatabaseName('ntamba-qhse'))
     this.version(1).stores({
       submissions: 'id, &reference, formId, recordDate, dueDate, enterprise, createdByRole, status, riskLevel, confidential, updatedAt',
       actions: 'id, sourceSubmissionId, priority, dueDate, status, createdAt',

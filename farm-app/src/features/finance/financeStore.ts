@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { localDatabaseName } from '../../lib/sharedDemoMode'
 
 export type AccountType = 'asset' | 'liability' | 'equity' | 'income' | 'expense'
 export type Account = { id: string; code: string; name: string; type: AccountType; active: boolean; system: boolean }
@@ -56,7 +57,7 @@ class FinanceDatabase extends Dexie {
   periods!: EntityTable<AccountingPeriod, 'id'>
   reconciliations!: EntityTable<Reconciliation, 'id'>
   constructor() {
-    super('ntamba-finance')
+    super(localDatabaseName('ntamba-finance'))
     this.version(1).stores({
       accounts: 'id, &code, type, active', parties: 'id, name, type, active, updatedAt', workers: 'id, name, active, updatedAt',
       sales: 'id, &invoiceNumber, invoiceDate, customerId, status, enterprise, createdAt', expenses: 'id, &reference, expenseDate, supplierId, status, enterprise, createdAt',

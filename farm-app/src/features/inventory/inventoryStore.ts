@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { localDatabaseName } from '../../lib/sharedDemoMode'
 
 export type InventoryCategory = 'Seed and planting material' | 'Fertilizer and soil inputs' | 'Animal feed' | 'Veterinary and crop health' | 'Fuel and lubricants' | 'Tools and hardware' | 'Packaging' | 'Other'
 export type InventoryItem = {
@@ -112,7 +113,7 @@ class InventoryDatabase extends Dexie {
   transactions!: EntityTable<StockTransaction, 'id'>
   lots!: EntityTable<InventoryLot, 'id'>
   constructor() {
-    super('ntamba-inventory')
+    super(localDatabaseName('ntamba-inventory'))
     this.version(1).stores({
       items: 'id, &sku, name, category, status, storageLocation, updatedAt',
       suppliers: 'id, name, status, updatedAt',

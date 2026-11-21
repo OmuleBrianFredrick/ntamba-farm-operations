@@ -1,5 +1,11 @@
 # Ntamba Farm Operations
 
+## Public demonstration workspace
+
+The authenticated farm workspace remains available at the normal routes. A separate public demonstration workspace is available at `/demo` after the demo-only Supabase migration has been applied. It uses a dedicated `public_demo_records` table and separate IndexedDB databases, so visitors can collaborate on demonstration data without reading or changing production farm records.
+
+Apply `supabase/migrations/202611200001_public_demo_collaboration.sql` in the Supabase SQL Editor before publishing `/demo`. This migration grants the anonymous role access only to the demo table and enables Realtime for that table. Never enter real farm, customer, worker, financial, or personal data in the public workspace.
+
 Offline-first farm operations application covering daily outputs, workers and wages, finance, and the existing 38 QHSE forms.
 
 ## What is implemented

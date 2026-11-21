@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { localDatabaseName } from '../../lib/sharedDemoMode'
 
 export type AdminRole = 'worker' | 'supervisor' | 'qhse' | 'accountant' | 'manager' | 'owner' | 'administrator'
 export type AdminUserStatus = 'active' | 'suspended' | 'invited'
@@ -35,7 +36,7 @@ class Phase6Database extends Dexie {
   savedReports!: EntityTable<SavedReport, 'id'>
   acceptanceRuns!: EntityTable<AcceptanceRun, 'id'>
   constructor() {
-    super('ntamba-administration')
+    super(localDatabaseName('ntamba-administration'))
     this.version(1).stores({
       users: 'id, &email, role, department, enterprise, status, updatedAt',
       settings: 'id, updatedAt',

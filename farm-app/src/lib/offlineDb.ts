@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { localDatabaseName } from './sharedDemoMode'
 
 export type SyncStatus = 'draft' | 'queued' | 'syncing' | 'synced' | 'needs-attention'
 
@@ -135,7 +136,7 @@ class FarmDatabase extends Dexie {
   cropRecords!: EntityTable<StoredCropRecord, 'id'>
 
   constructor() {
-    super('ntamba-farm-operations')
+    super(localDatabaseName('ntamba-farm-operations'))
     this.version(1).stores({ drafts: 'id, formType, updatedAt, syncStatus' })
     this.version(2).stores({
       drafts: 'id, formType, updatedAt, syncStatus',

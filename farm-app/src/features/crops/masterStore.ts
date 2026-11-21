@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { localDatabaseName } from '../../lib/sharedDemoMode'
 import { varieties, seasons } from './cropData'
 export type Variety = typeof varieties[number]
 export type Season = typeof seasons[number] & { startsOn?: string; endsOn?: string }
@@ -7,7 +8,7 @@ class MasterDatabase extends Dexie {
   varieties!: EntityTable<Variety, 'id'>
   seasons!: EntityTable<Season, 'id'>
   fields!: EntityTable<Field, 'id'>
-  constructor() { super('ntamba-crop-master'); this.version(1).stores({ varieties: 'id, crop', seasons: 'id, code' }); this.version(2).stores({ varieties: 'id, crop', seasons: 'id, code', fields: 'id, name' }) }
+  constructor() { super(localDatabaseName('ntamba-crop-master')); this.version(1).stores({ varieties: 'id, crop', seasons: 'id, code' }); this.version(2).stores({ varieties: 'id, crop', seasons: 'id, code', fields: 'id, name' }) }
 }
 export const masterDb = new MasterDatabase()
 export async function loadVarieties() { const saved = await masterDb.varieties.toArray(); return [...new Map([...varieties, ...saved].map(row => [row.id, row])).values()] }

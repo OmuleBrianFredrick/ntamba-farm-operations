@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { isDemoMode, supabase } from '../lib/supabase'
 import { AuthContext, type AuthState, type FarmMembership } from './AuthContext'
 import { highestPriorityRole, type PlatformRole } from './roles'
+import { isPublicDemoRoute } from '../lib/sharedDemoMode'
 
 type MembershipRow = {
   id: string
@@ -22,13 +23,13 @@ function relatedName(value: { name: string } | Array<{ name: string }> | null, f
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(!isDemoMode)
+  const [loading, setLoading] = useState(!isDemoMode && !isPublicDemoRoute)
   const [profile, setProfile] = useState<ProfileRow | null>(null)
   const [memberships, setMemberships] = useState<FarmMembership[]>([])
   const [identityError, setIdentityError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!supabase) return
+    if (!supabase || isPublicDemoRoute) return
     void supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       if (!data.session) setLoading(false)
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refreshIdentity = useCallback(async () => {
-    if (!supabase || !session) return
+    if (!supabase || !session || isPublicDemoRoute) return
     setIdentityError(null)
     const [{ data: profileData, error: profileError }, { data: membershipData, error: membershipError }] = await Promise.all([
       supabase.from('profiles').select('display_name,email').eq('id', session.user.id).single(),
@@ -83,14 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthState>(() => ({
     session,
     loading,
-    demo: isDemoMode,
+    demo: isDemoMode || isPublicDemoRoute,
     email: profile?.email ?? session?.user.email ?? '',
     memberships,
     activeMembership,
     roles,
     identityError,
-    canManageUsers: isDemoMode || roles.some((role) => ['ceo', 'administrator', 'farm_manager'].includes(role)),
-    displayName: isDemoMode
+    canManageUsers: isDemoMode || isPublicDemoRoute || roles.some((role) => ['ceo', 'administrator', 'farm_manager'].includes(role)),
+    displayName: isPublicDemoRoute ? 'Demo Visitor' : isDemoMode
       ? 'Sarah K.'
       : String(profile?.display_name ?? session?.user.user_metadata.display_name ?? session?.user.email?.split('@')[0] ?? 'Farm user'),
     signIn: async (email, password) => {
@@ -109,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return error?.message ?? null
     },
     refreshIdentity,
-    signOut: async () => { if (supabase) await supabase.auth.signOut() },
+    signOut: async () => { if (supabase && !isPublicDemoRoute) await supabase.auth.signOut() },
   }), [activeMembership, identityError, loading, memberships, profile, refreshIdentity, roles, session])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

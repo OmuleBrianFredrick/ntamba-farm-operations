@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { localDatabaseName } from '../../lib/sharedDemoMode'
 
 export type Enterprise = 'livestock' | 'poultry' | 'fish-apiary'
 export type ReviewStatus = 'recorded' | 'reviewed' | 'needs-correction'
@@ -79,7 +80,7 @@ class AnimalDatabase extends Dexie {
   assets!: EntityTable<ManagedAsset, 'id'>
   events!: EntityTable<LifecycleEvent, 'id'>
   constructor() {
-    super('ntamba-animal-records')
+    super(localDatabaseName('ntamba-animal-records'))
     this.version(1).stores({ records: 'id, enterprise, date, subject' })
     this.version(2).stores({
       records: 'id, enterprise, date, subject, reviewStatus',
