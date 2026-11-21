@@ -1,4 +1,6 @@
 export type QhseRole = 'worker' | 'supervisor' | 'qhse' | 'manager' | 'owner'
+export type QhseModule = 'farm-operations' | 'crops' | 'livestock' | 'poultry' | 'fish-apiary' | 'stock-inputs' | 'sales-finance' | 'qhse-management'
+export type QhsePosition = 'worker' | 'enterprise-supervisor' | 'qhse-lead' | 'farm-manager' | 'ceo-owner' | 'storekeeper' | 'administrator' | 'auditor'
 export type QhseWorkflow = 'inspection' | 'event' | 'application' | 'register' | 'review'
 export type QhseFrequency = 'daily' | 'weekly' | 'monthly' | 'event' | 'before-use' | 'scheduled'
 
@@ -9,6 +11,8 @@ export type QhseFormDefinition = {
   workflow: QhseWorkflow
   frequency: QhseFrequency
   assignedRoles: QhseRole[]
+  modules: QhseModule[]
+  positions: QhsePosition[]
   enterprises: string[]
   confidential: boolean
   version: '01'
@@ -41,7 +45,9 @@ const sourceFiles: Record<string, string> = {
   '37': '37_Employee_Attendance_Allocation.pdf', '38': '38_Farm_Manager_Weekly_Review.pdf',
 }
 
-function form(id: string, title: string, category: string, workflow: QhseWorkflow, frequency: QhseFrequency, assignedRoles: QhseRole[], enterprises: string[] = ['All farm'], confidential = false, questions?: string[]): QhseFormDefinition {
+type BaseQhseFormDefinition = Omit<QhseFormDefinition, 'modules' | 'positions'>
+
+function form(id: string, title: string, category: string, workflow: QhseWorkflow, frequency: QhseFrequency, assignedRoles: QhseRole[], enterprises: string[] = ['All farm'], confidential = false, questions?: string[]): BaseQhseFormDefinition {
   const sourceFile = sourceFiles[id]
   return { id, title, category, workflow, frequency, assignedRoles, enterprises, confidential, version: '01', questions: questions ?? questionSets[workflow], sourceFile }
 }
@@ -51,7 +57,7 @@ export const qhseCategories = [
   'People & competence', 'Crop operations', 'Animal operations', 'Management & workforce',
 ]
 
-export const qhseForms: QhseFormDefinition[] = [
+const baseQhseForms: BaseQhseFormDefinition[] = [
   form('01', 'Daily Farm Inspection', 'Safety & incidents', 'inspection', 'daily', leadRoles),
   form('02', 'Task Risk Assessment', 'Safety & incidents', 'review', 'event', leadRoles),
   form('03', 'Toolbox Talk Attendance', 'Safety & incidents', 'register', 'event', fieldRoles),
@@ -91,6 +97,70 @@ export const qhseForms: QhseFormDefinition[] = [
   form('37', 'Employee Attendance & Allocation', 'Management & workforce', 'register', 'daily', leadRoles, ['All farm'], true),
   form('38', 'Farm Manager Weekly Review', 'Management & workforce', 'review', 'weekly', ['manager', 'owner']),
 ]
+
+export const moduleLabels: Record<QhseModule, string> = {
+  'farm-operations': 'Farm operations', crops: 'Crops', livestock: 'Livestock', poultry: 'Poultry',
+  'fish-apiary': 'Fish & apiary', 'stock-inputs': 'Stock & inputs', 'sales-finance': 'Sales & finance', 'qhse-management': 'QHSE & management',
+}
+
+export const positionLabels: Record<QhsePosition, string> = {
+  worker: 'Worker / specialist', 'enterprise-supervisor': 'Enterprise supervisor', 'qhse-lead': 'QHSE lead',
+  'farm-manager': 'Farm manager', 'ceo-owner': 'CEO / farm owner', storekeeper: 'Storekeeper', administrator: 'System administrator', auditor: 'Auditor',
+}
+
+const rolePositionMap: Record<QhseRole, QhsePosition> = {
+  worker: 'worker', supervisor: 'enterprise-supervisor', qhse: 'qhse-lead', manager: 'farm-manager', owner: 'ceo-owner',
+}
+
+const positionAssignments: Record<string, QhsePosition[]> = {
+  '10': ['storekeeper', 'enterprise-supervisor', 'qhse-lead', 'farm-manager'],
+  '16': ['enterprise-supervisor', 'qhse-lead', 'farm-manager'],
+  '18': ['enterprise-supervisor', 'qhse-lead', 'farm-manager', 'ceo-owner'],
+  '22': ['enterprise-supervisor', 'qhse-lead', 'farm-manager'],
+  '37': ['farm-manager', 'administrator', 'auditor'],
+  '38': ['farm-manager', 'ceo-owner'],
+}
+
+// Module ownership is based on the activity described in each controlled source form.
+// Cross-cutting controls deliberately appear in every affected operational module.
+const moduleAssignments: Record<string, QhseModule[]> = {
+  '01': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance', 'qhse-management'],
+  '02': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance', 'qhse-management'],
+  '03': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance', 'qhse-management'],
+  '04': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance', 'qhse-management'],
+  '05': ['qhse-management', 'farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance'],
+  '06': ['farm-operations', 'stock-inputs', 'qhse-management'],
+  '07': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'qhse-management'],
+  '08': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs'],
+  '09': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs'],
+  '10': ['stock-inputs', 'crops', 'livestock', 'poultry', 'fish-apiary', 'qhse-management'],
+  '11': ['crops', 'stock-inputs', 'sales-finance'],
+  '12': ['crops', 'stock-inputs'],
+  '13': ['crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs'],
+  '14': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'qhse-management'],
+  '15': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'qhse-management'],
+  '16': ['crops', 'sales-finance'],
+  '17': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance'],
+  '18': ['crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance', 'qhse-management'],
+  '19': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance'],
+  '20': ['qhse-management', 'farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs'],
+  '21': ['livestock', 'poultry', 'qhse-management'],
+  '22': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs'],
+  '23': ['crops'], '24': ['crops'], '25': ['crops'], '26': ['crops'],
+  '27': ['livestock'], '28': ['livestock'], '29': ['livestock'],
+  '30': ['poultry'],
+  '31': ['fish-apiary'], '32': ['fish-apiary', 'sales-finance'], '33': ['fish-apiary'],
+  '34': ['livestock', 'poultry'], '35': ['livestock', 'poultry', 'fish-apiary', 'qhse-management'],
+  '36': ['livestock', 'poultry', 'fish-apiary'],
+  '37': ['farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance', 'qhse-management'],
+  '38': ['qhse-management', 'farm-operations', 'crops', 'livestock', 'poultry', 'fish-apiary', 'stock-inputs', 'sales-finance'],
+}
+
+export const qhseForms: QhseFormDefinition[] = baseQhseForms.map(definition => ({
+  ...definition,
+  modules: moduleAssignments[definition.id] ?? ['qhse-management'],
+  positions: positionAssignments[definition.id] ?? definition.assignedRoles.map(role => rolePositionMap[role]),
+}))
 
 export const roleLabels: Record<QhseRole, string> = {
   worker: 'Worker / specialist', supervisor: 'Enterprise supervisor', qhse: 'QHSE lead', manager: 'Farm manager', owner: 'CEO / owner',

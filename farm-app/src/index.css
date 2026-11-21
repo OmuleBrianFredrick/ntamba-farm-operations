@@ -426,6 +426,8 @@ button { cursor: pointer; }
 .qhse-form-card > div:nth-child(2) > span { color: var(--forest-800); font-size: 9px; font-weight: 800; text-transform: uppercase; }
 .qhse-form-card h3 { margin: 3px 0 5px; font-size: 14px; }
 .qhse-form-card p { margin: 0; color: var(--muted); font-size: 10px; text-transform: capitalize; }
+.qhse-form-card small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.35; }
+.qhse-form-card small strong { color: var(--ink); }
 .qhse-card-actions { grid-column: 2; display: flex; gap: 7px; }
 .compact-button { min-height: 34px; padding: 0 11px; font-size: 10px; }
 .qhse-card-actions a { display: inline-flex; align-items: center; text-decoration: none; }

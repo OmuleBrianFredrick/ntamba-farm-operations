@@ -11,7 +11,14 @@ describe('QHSE catalogue and hierarchy', () => {
   it('contains all 38 controlled forms with unique ids and source PDFs', () => {
     expect(qhseForms).toHaveLength(38)
     expect(new Set(qhseForms.map(item => item.id)).size).toBe(38)
-    expect(qhseForms.every(item => item.sourceFile.endsWith('.pdf') && item.version === '01')).toBe(true)
+    expect(qhseForms.every(item => item.sourceFile.endsWith('.pdf') && item.version === '01' && item.modules.length > 0 && item.positions.length > 0)).toBe(true)
+  })
+  it('aligns specialist forms to the correct production modules and positions', () => {
+    expect(qhseForms.find(item => item.id === '24')?.modules).toEqual(['crops'])
+    expect(qhseForms.find(item => item.id === '30')?.modules).toEqual(['poultry'])
+    expect(qhseForms.find(item => item.id === '31')?.modules).toEqual(['fish-apiary'])
+    expect(qhseForms.find(item => item.id === '10')?.positions).toContain('storekeeper')
+    expect(qhseForms.find(item => item.id === '38')?.positions).toEqual(['farm-manager', 'ceo-owner'])
   })
   it('gives management full oversight while limiting worker assignments', () => {
     expect(qhseForms.every(item => canAccessForm(item, 'manager'))).toBe(true)
