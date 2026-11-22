@@ -109,6 +109,8 @@ async function invokeUserManagement(body: Record<string, unknown>) {
 
   let response: Response | undefined
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 15_000)
     try {
       response = await fetch(`${supabaseUrl}/functions/v1/manage-farm-user`, {
         method: 'POST',
@@ -120,6 +122,7 @@ async function invokeUserManagement(body: Record<string, unknown>) {
           'X-Client-Info': 'ntamba-farm-operations',
         },
         body: JSON.stringify(body),
+        signal: controller.signal,
       })
       if (response.status !== 401 || attempt === 1) break
       accessToken = await getAccessToken()
@@ -129,7 +132,11 @@ async function invokeUserManagement(body: Record<string, unknown>) {
         continue
       }
       const message = error instanceof Error ? error.message : 'Unknown network error.'
-      throw new Error(`Unable to reach the Supabase user-management function: ${message}`)
+      throw new Error(error instanceof DOMException && error.name === 'AbortError'
+        ? 'The Supabase user-management function timed out. Check the function logs and SMTP configuration.'
+        : `Unable to reach the Supabase user-management function: ${message}`)
+    } finally {
+      window.clearTimeout(timeout)
     }
   }
   if (!response) throw new Error('Unable to reach the Supabase user-management function.')

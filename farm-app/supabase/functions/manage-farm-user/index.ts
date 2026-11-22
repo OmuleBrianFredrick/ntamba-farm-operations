@@ -19,6 +19,17 @@ function response(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 }
 
+function invitationError(error: unknown) {
+  const code = error && typeof error === 'object' && 'code' in error && typeof error.code === 'string' ? error.code : ''
+  if (code === 'over_email_send_rate_limit') {
+    return 'Supabase\'s default email service has reached its 2-emails-per-hour limit. Configure custom SMTP (Zoho) before sending more invitations.'
+  }
+  if (code === 'email_address_not_authorized') {
+    return 'Supabase\'s default email service only sends to project team addresses. Configure custom SMTP (Zoho) to invite farm workers.'
+  }
+  return error instanceof Error ? error.message : 'The invitation email could not be sent.'
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (request.method !== 'POST') return response({ ok: false, error: 'Method not allowed.' }, 405)
@@ -72,7 +83,7 @@ Deno.serve(async (request) => {
           data: { display_name: name, phone },
           redirectTo: String(body.redirectTo ?? '').trim() || undefined,
         })
-        if (inviteError) throw inviteError
+        if (inviteError) return response({ ok: false, error: invitationError(inviteError) }, inviteError.code === 'over_email_send_rate_limit' ? 429 : 400)
         targetUserId = inviteData.user.id
         invited = true
       }
