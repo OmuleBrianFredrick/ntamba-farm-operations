@@ -3,6 +3,31 @@ import { localDatabaseName } from './sharedDemoMode'
 
 export type SyncStatus = 'draft' | 'queued' | 'syncing' | 'synced' | 'needs-attention'
 
+export type FarmSyncOperation = 'upsert' | 'delete'
+export type FarmSyncQueueStatus = 'queued' | 'syncing' | 'needs-attention' | 'conflict'
+
+/**
+ * A durable, scope-aware envelope for records that are captured in one of the
+ * module-specific offline stores. The record id is deterministic for a scope,
+ * so retrying the same mutation is idempotent.
+ */
+export type FarmSyncQueueRecord = {
+  id: string
+  organizationId: string
+  farmId: string | null
+  databaseName: string
+  tableName: string
+  recordKey: string
+  operation: FarmSyncOperation
+  payload: Record<string, unknown> | null
+  clientUpdatedAt: string
+  status: FarmSyncQueueStatus
+  attempts: number
+  lastError?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type DraftRecord = {
   id: string
   formType: 'daily-work'
@@ -132,6 +157,7 @@ export type StoredCropRecord = {
 class FarmDatabase extends Dexie {
   drafts!: EntityTable<DraftRecord, 'id'>
   syncQueue!: EntityTable<SyncQueueRecord, 'id'>
+  farmSyncQueue!: EntityTable<FarmSyncQueueRecord, 'id'>
   plantingSessions!: EntityTable<StoredPlantingSession, 'id'>
   cropRecords!: EntityTable<StoredCropRecord, 'id'>
 
@@ -153,10 +179,37 @@ class FarmDatabase extends Dexie {
       plantingSessions: 'id, crop, block, status, syncStatus, plantedOn, updatedAt',
       cropRecords: 'id, recordType, crop, block, recordDate, actionRequired, syncStatus, updatedAt',
     })
+    this.version(5).stores({
+      drafts: 'id, formType, updatedAt, syncStatus',
+      syncQueue: 'id, recordType, status, createdAt, updatedAt',
+      farmSyncQueue: 'id, organizationId, farmId, databaseName, tableName, recordKey, status, createdAt, updatedAt',
+      plantingSessions: 'id, crop, block, status, syncStatus, plantedOn, updatedAt',
+      cropRecords: 'id, recordType, crop, block, recordDate, actionRequired, syncStatus, updatedAt',
+    })
   }
 }
 
 export const offlineDb = new FarmDatabase()
+
+export function farmSyncRecordId(organizationId: string, farmId: string | null, databaseName: string, tableName: string, recordKey: string) {
+  return [organizationId, farmId ?? 'all-farms', databaseName, tableName, recordKey].map(encodeURIComponent).join(':')
+}
+
+export async function queueFarmSyncMutation(input: Omit<FarmSyncQueueRecord, 'id' | 'status' | 'attempts' | 'createdAt' | 'updatedAt'>) {
+  const now = new Date().toISOString()
+  const id = farmSyncRecordId(input.organizationId, input.farmId, input.databaseName, input.tableName, input.recordKey)
+  const previous = await offlineDb.farmSyncQueue.get(id)
+  await offlineDb.farmSyncQueue.put({
+    ...input,
+    id,
+    status: 'queued',
+    attempts: previous?.attempts ?? 0,
+    lastError: undefined,
+    createdAt: previous?.createdAt ?? now,
+    updatedAt: now,
+  })
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('farm-sync-change'))
+}
 
 export async function saveDailyWorkDraft(step: number, payload: Record<string, unknown>) {
   await offlineDb.drafts.put({

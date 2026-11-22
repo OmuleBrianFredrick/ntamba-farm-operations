@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { offlineDb } from '../lib/offlineDb'
 import { flushSyncQueue } from '../lib/syncEngine'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { farmSyncPendingCount, flushFarmSyncQueue } from '../lib/serverSync'
 
 type Status = { label: string; tone: 'online' | 'pending' | 'offline'; pending: number }
 
@@ -11,18 +12,22 @@ export function useSyncStatus(): Status {
   useEffect(() => {
     let active = true
     const refresh = async () => {
-      const pending = await offlineDb.syncQueue.where('status').anyOf('queued', 'syncing', 'needs-attention').count()
+      const [legacyPending, modulePending] = await Promise.all([
+        offlineDb.syncQueue.where('status').anyOf('queued', 'syncing', 'needs-attention').count(),
+        farmSyncPendingCount(),
+      ])
+      const pending = legacyPending + modulePending
       if (!active) return
       if (!navigator.onLine) setStatus({ label: `${pending} saved offline`, tone: 'offline', pending })
       else if (!isSupabaseConfigured) setStatus({ label: pending ? `${pending} queued locally` : 'Local development', tone: 'pending', pending })
       else if (pending) setStatus({ label: `${pending} waiting to sync`, tone: 'pending', pending })
       else setStatus({ label: 'Online / Synced', tone: 'online', pending: 0 })
     }
-    const onOnline = () => { void flushSyncQueue().finally(refresh) }
+    const onOnline = () => { void Promise.all([flushSyncQueue(), flushFarmSyncQueue()]).finally(refresh) }
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', refresh)
     window.addEventListener('farm-sync-change', refresh)
-    void refresh().then(() => flushSyncQueue()).then(refresh)
+    void refresh().then(() => Promise.all([flushSyncQueue(), flushFarmSyncQueue()])).then(refresh)
     return () => {
       active = false
       window.removeEventListener('online', onOnline)

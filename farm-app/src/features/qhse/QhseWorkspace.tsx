@@ -57,8 +57,8 @@ function AttachmentLinks({ row }: { row: QhseSubmission }) {
   return <div className="qhse-attachments"><strong>Supporting documents</strong>{attachments.map((attachment) => <div key={attachment.path}><span>{attachment.name}</span>{links[attachment.path] ? <a className="text-link" href={links[attachment.path]} target="_blank" rel="noreferrer">Open</a> : <button className="text-link" onClick={() => void open(attachment)}>Prepare secure link</button>}<button className="text-link" onClick={() => void remove(attachment)}>Remove</button></div>)}{message ? <small className="form-error">{message}</small> : null}</div>
 }
 
-export function QhseRoleBar({ role, onRole }: { role: QhseRole; onRole: (role: QhseRole) => void }) {
-  return <section className="qhse-role-bar"><div><strong>Viewing as</strong><span>Local role preview · production permissions remain pending</span></div><label><span>Role</span><select className="field" value={role} onChange={event => onRole(event.target.value as QhseRole)}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></section>
+export function QhseRoleBar({ role, onRole, locked = false }: { role: QhseRole; onRole: (role: QhseRole) => void; locked?: boolean }) {
+  return <section className="qhse-role-bar"><div><strong>Viewing as</strong><span>{locked ? 'Authenticated membership role · server permissions apply' : 'Local role preview · sign in to use the membership role'}</span></div><label><span>Role</span><select className="field" value={role} disabled={locked} onChange={event => onRole(event.target.value as QhseRole)}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></section>
 }
 
 function FormCard({ definition, onOpen }: { definition: QhseFormDefinition; onOpen: (definition: QhseFormDefinition) => void }) {

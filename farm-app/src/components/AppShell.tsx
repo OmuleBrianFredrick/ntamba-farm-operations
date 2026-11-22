@@ -7,6 +7,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useSyncStatus } from '../hooks/useSyncStatus'
 import { isPublicDemoRoute } from '../lib/sharedDemoMode'
+import { startAuthenticatedFarmSync } from '../lib/serverSync'
 
 const items = [
   ['/', 'Overview', Gauge], ['/daily-work', 'Daily Work', ClipboardList],
@@ -22,10 +23,15 @@ export function AppShell() {
   const [sharedUpdate, setSharedUpdate] = useState(0)
   const [demoSyncLabel, setDemoSyncLabel] = useState('Connecting live demo')
   const [todayLabel] = useState(() => new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Kampala', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date()))
-  const { activeMembership, canManageUsers, displayName, demo, signOut } = useAuth()
+  const { activeMembership, canManageUsers, displayName, demo, session, signOut } = useAuth()
   const sync = useSyncStatus()
   const location = useLocation()
   const initials = displayName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
+
+  useEffect(() => {
+    if (isPublicDemoRoute || !session || !activeMembership) return
+    return startAuthenticatedFarmSync(activeMembership, session.user.id)
+  }, [activeMembership, session])
 
   useEffect(() => {
     if (!isPublicDemoRoute) return

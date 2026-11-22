@@ -18,6 +18,7 @@ Offline-first farm operations application covering daily outputs, workers and wa
 - Hierarchical assignment and submission schema for all 38 QHSE forms
 - Crop and variety register, seasons, planting sessions, planting inputs, field observations and traceable harvest batches
 - Searchable crop workspace with offline-first planting and crop-update workflows
+- Authenticated module synchronization for animal, crop master, inventory, finance, QHSE and administration stores. Mutations use a scoped, idempotent envelope with durable retry and stale-write conflict reporting; the authenticated membership supplies the organization/farm scope and QHSE role.
 
 ## Local application
 
@@ -27,7 +28,7 @@ copy .env.example .env.local
 npm run dev
 ```
 
-For visual-only local development, set `VITE_DEMO_MODE=true`. Records remain in the browser synchronization queue. For a connected environment, supply the project URL and publishable key and leave demo mode false.
+For visual-only local development, set `VITE_DEMO_MODE=true`. Records remain in the browser synchronization queue. For a connected environment, supply the project URL and publishable key and leave demo mode false. Apply `supabase/migrations/202611220003_authenticated_module_sync.sql` after the Stage 2 code is deployed. It creates the RLS-protected `farm_sync_records` envelope and enables Realtime for server-to-browser updates. Keep failed envelopes in the local queue until the reported connection or conflict is resolved.
 
 ## Database
 
