@@ -1,16 +1,18 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { localDatabaseName } from '../../lib/sharedDemoMode'
 import { canAccessForm, formById, qhseForms, type QhseFrequency, type QhseRole } from './qhseCatalog'
+import type { FarmDocumentReference } from '../../lib/storage'
 
 export type SubmissionStatus = 'draft' | 'submitted' | 'needs-changes' | 'approved' | 'restricted'
 export type ReviewDecision = 'approve' | 'changes' | 'restrict'
 export type SubmissionHistory = { at: string; by: string; role: QhseRole; action: string; note: string }
+export type QhseAttachment = FarmDocumentReference
 export type QhseSubmission = {
   id: string; formId: string; formTitle: string; formVersion: string; reference: string; recordDate: string; dueDate: string;
   enterprise: string; location: string; createdBy: string; createdByRole: QhseRole; answers: Record<string, string>;
   overallResult: 'satisfactory' | 'action-required' | 'not-applicable'; riskLevel: 'low' | 'medium' | 'high' | 'critical';
   restrictionRequired: boolean; confidential: boolean; status: SubmissionStatus; revision: number; reviewNote: string;
-  createdAt: string; updatedAt: string; submittedAt: string | null; approvedAt: string | null; history: SubmissionHistory[]
+  createdAt: string; updatedAt: string; submittedAt: string | null; approvedAt: string | null; history: SubmissionHistory[]; attachments?: QhseAttachment[]
 }
 export type CorrectiveAction = {
   id: string; sourceSubmissionId: string; sourceReference: string; sourceFormTitle: string; description: string; owner: string;
@@ -73,14 +75,14 @@ export async function saveSubmission(input: Omit<QhseSubmission, 'id' | 'referen
   const issue = validateSubmission(input); if (issue) throw new Error(issue)
   const now = new Date().toISOString(); const existing = input.id ? await qhseDb.submissions.get(input.id) : undefined
   if (existing && !['draft', 'needs-changes'].includes(existing.status)) throw new Error('Submitted evidence cannot be silently edited. Request changes or create a new record.')
-  const id = existing?.id ?? crypto.randomUUID(); const reference = existing?.reference ?? `QHSE-${input.formId}-${farmToday().replaceAll('-', '')}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`
+  const id = existing?.id ?? input.id ?? crypto.randomUUID(); const reference = existing?.reference ?? `QHSE-${input.formId}-${farmToday().replaceAll('-', '')}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`
   const status: SubmissionStatus = submit ? (input.restrictionRequired ? 'restricted' : 'submitted') : 'draft'
   const actionText = submit ? 'Submitted controlled record' : 'Saved draft'
   const submission: QhseSubmission = {
     ...input, id, reference, formTitle: definition.title, formVersion: definition.version, confidential: definition.confidential || input.confidential,
     status, revision: existing ? existing.revision + 1 : 1, reviewNote: '', createdAt: existing?.createdAt ?? now, updatedAt: now,
     submittedAt: submit ? now : null, approvedAt: null,
-    history: [...(existing?.history ?? []), { at: now, by: input.createdBy, role: input.createdByRole, action: actionText, note: '' }],
+    history: [...(existing?.history ?? []), { at: now, by: input.createdBy, role: input.createdByRole, action: actionText, note: '' }], attachments: input.attachments ?? existing?.attachments ?? [],
   }
   await qhseDb.transaction('rw', qhseDb.submissions, qhseDb.actions, async () => {
     await qhseDb.submissions.put(submission)
@@ -90,6 +92,20 @@ export async function saveSubmission(input: Omit<QhseSubmission, 'id' | 'referen
     }
   })
   notify(); return submission
+}
+
+export async function addSubmissionAttachments(id: string, attachments: QhseAttachment[]) {
+  const submission = await qhseDb.submissions.get(id)
+  if (!submission) throw new Error('Submission not found.')
+  await qhseDb.submissions.update(id, { attachments: [...(submission.attachments ?? []), ...attachments], updatedAt: new Date().toISOString() })
+  notify()
+}
+
+export async function removeSubmissionAttachment(id: string, path: string) {
+  const submission = await qhseDb.submissions.get(id)
+  if (!submission) throw new Error('Submission not found.')
+  await qhseDb.submissions.update(id, { attachments: (submission.attachments ?? []).filter((attachment) => attachment.path !== path), updatedAt: new Date().toISOString() })
+  notify()
 }
 
 export async function reviewSubmission(id: string, decision: ReviewDecision, reviewer: string, role: QhseRole, note: string) {
