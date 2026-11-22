@@ -19,7 +19,7 @@ const QhsePage = lazy(() => import('./pages/QhsePage').then((module) => ({ defau
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })))
 const AdministrationPage = lazy(() => import('./pages/AdministrationPage').then((module) => ({ default: module.AdministrationPage })))
 
-function OperationalRoutes({ demo = false }: { demo?: boolean }) {
+function operationalRouteElements(demo = false) {
   return <>
     <Route index element={<Suspense fallback={<div className="route-loading">Loading overview.</div>}><OverviewPage /></Suspense>} />
     <Route path="daily-work" element={<Suspense fallback={<div className="route-loading">Loading daily work.</div>}><DailyWorkPage /></Suspense>} />
@@ -47,9 +47,9 @@ export default function App() {
       {!demo && <>
         <Route path="login" element={<Suspense fallback={<div className="route-loading">Loading sign in.</div>}><LoginPage /></Suspense>} />
         <Route path="set-password" element={<Suspense fallback={<div className="route-loading">Loading account setup.</div>}><SetPasswordPage /></Suspense>} />
-        <Route element={<ProtectedRoute />}><Route element={<AppShell />}><OperationalRoutes /></Route></Route>
+        <Route element={<ProtectedRoute />}><Route element={<AppShell />}>{operationalRouteElements()}</Route></Route>
       </>}
-      {demo && <Route element={<AppShell />}><OperationalRoutes demo /></Route>}
+      {demo && <Route element={<AppShell />}>{operationalRouteElements(true)}</Route>}
     </Routes>
   </BrowserRouter>
 }
