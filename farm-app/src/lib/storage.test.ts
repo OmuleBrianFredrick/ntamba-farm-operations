@@ -14,8 +14,8 @@ describe('protected farm document storage', () => {
 
   it('scopes object paths by organization, farm, module and record', () => {
     expect(farmDocumentPath({ organizationId: 'org-1', farmId: 'farm-1', module: 'qhse', recordId: 'record-1' }, 'inspection.jpg', 'token'))
-      .toBe('org-1/farm-1/qhse/record-1/token.jpg')
+      .toBe('org-1/farm-1/documents/qhse/record-1/token.jpg')
     expect(farmDocumentPath({ organizationId: 'org-1', farmId: null, module: 'finance', recordId: 'record-2' }, 'receipt.PDF', 'token'))
-      .toBe('org-1/all-farms/finance/record-2/token.pdf')
+      .toBe('org-1/all-farms/documents/finance/record-2/token.pdf')
   })
 })

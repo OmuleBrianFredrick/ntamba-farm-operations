@@ -43,7 +43,9 @@ export function validateFarmDocument(file: Pick<File, 'name' | 'type' | 'size'>)
 export function farmDocumentPath(scope: FarmDocumentScope, fileName: string, token = 'upload') {
   const farm = scope.farmId ? safePathSegment(scope.farmId) : 'all-farms'
   const extension = fileName.includes('.') ? `.${fileName.split('.').pop()!.toLowerCase().replace(/[^a-z0-9]/g, '')}` : ''
-  return [safePathSegment(scope.organizationId), farm, safePathSegment(scope.module), safePathSegment(scope.recordId), `${safePathSegment(token)}${extension}`].join('/')
+  // Keep a dedicated document folder so the currently deployed storage policy
+  // can distinguish the four scoped directories from the file name.
+  return [safePathSegment(scope.organizationId), farm, 'documents', safePathSegment(scope.module), safePathSegment(scope.recordId), `${safePathSegment(token)}${extension}`].join('/')
 }
 
 function requireStorage() {
