@@ -85,18 +85,6 @@ async function getAccessToken() {
   }
   let accessToken = session?.access_token
   if (!accessToken) throw new Error('Your Supabase session has expired. Sign in again before sending an invitation.')
-
-  // A browser can retain a token that still has a future exp claim after the
-  // Supabase session has been revoked. Validate it with Auth before invoking
-  // the Edge Function so the gateway does not turn that 401 into a CORS error.
-  const { error: userError } = await client.auth.getUser(accessToken)
-  if (userError) {
-    const refreshed = await client.auth.refreshSession()
-    sessionError = refreshed.error
-    session = refreshed.data.session
-    accessToken = session?.access_token
-    if (sessionError || !accessToken) throw new Error('Your Supabase session has expired. Sign in again before sending an invitation.')
-  }
   return accessToken
 }
 
@@ -127,10 +115,6 @@ async function invokeUserManagement(body: Record<string, unknown>) {
       if (response.status !== 401 || attempt === 1) break
       accessToken = await getAccessToken()
     } catch (error) {
-      if (attempt === 0) {
-        accessToken = await getAccessToken()
-        continue
-      }
       const message = error instanceof Error ? error.message : 'Unknown network error.'
       throw new Error(error instanceof DOMException && error.name === 'AbortError'
         ? 'The Supabase user-management function timed out. Check the function logs and SMTP configuration.'
